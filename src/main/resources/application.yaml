@@ -1,0 +1,18 @@
+server:
+  port: 3000
+
+spring:
+  application:
+    name: dynamodb-example
+
+  graphql:
+    graphiql:
+      enabled: true
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-uiyohlg5bc7ywx10.us.auth0.com/
+          audience: demo-authorization-api
+
