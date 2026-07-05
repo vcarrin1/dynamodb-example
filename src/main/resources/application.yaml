@@ -6,6 +6,8 @@ spring:
     name: dynamodb-example
 
   graphql:
+    schema:
+      locations: classpath*:graphql/**/
     graphiql:
       enabled: true
 

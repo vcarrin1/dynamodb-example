@@ -1,0 +1,7 @@
+type InventoryItem {
+  pKey: String
+  sKey: String
+  entityType: String
+  productId: UUID
+  stockLevel: Int
+}

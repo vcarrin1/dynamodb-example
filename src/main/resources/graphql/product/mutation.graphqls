@@ -1,0 +1,5 @@
+extend type Mutation {
+  createProduct(product: ProductItemInput!): ProductItem
+  updateProduct(product: ProductItemInput!): ProductItem
+  deleteProduct(productId: UUID!): Boolean!
+}

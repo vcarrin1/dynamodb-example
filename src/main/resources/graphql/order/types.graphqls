@@ -1,0 +1,28 @@
+type OrderItem {
+  pKey: String
+  sKey: String
+  entityType: String
+  orderId: UUID
+  customerId: String
+  orderStatus: String
+  deliveryDate: String
+  createdAt: String
+}
+
+type OrderLineItem {
+  pKey: String
+  sKey: String
+  entityType: String
+  orderItemId: UUID
+  orderId: UUID
+  productId: UUID
+  quantity: Int
+  price: Float
+}
+
+input OrderItemInput {
+  orderId: UUID
+  customerId: UUID!
+  orderStatus: String
+  deliveryDate: String
+}

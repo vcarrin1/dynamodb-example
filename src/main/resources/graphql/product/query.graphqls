@@ -1,0 +1,6 @@
+extend type Query {
+  product(productId: UUID!): ProductItem
+  products: [ProductItem!]!
+  productWithOrderItems(productId: UUID!): ProductAggregate
+  productsInStock: [ProductItem!]!
+}

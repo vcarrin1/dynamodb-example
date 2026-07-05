@@ -90,7 +90,7 @@ aws dynamodb update-table \
 
 ## GraphQL Endpoint
 
-- URL: `http://localhost:3000/graphql`
+- URL: `http://localhost:3000/graphiql`
 
 If security is enabled in your local environment, include a valid Bearer token in your requests.
 

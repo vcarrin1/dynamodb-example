@@ -1,0 +1,4 @@
+type Query {
+  customer(customerId: UUID!): CustomerAggregate
+  customers(pageSize: Int = 10, nextToken: String, filter: CustomerFilterInput): CustomerPage
+}

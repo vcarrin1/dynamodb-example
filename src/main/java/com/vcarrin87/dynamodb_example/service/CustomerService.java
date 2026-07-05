@@ -56,7 +56,12 @@ public class CustomerService {
 
         List<OrderItem> orders = orderService.listOrdersForCustomer(customerId);
 
-        List<UUID> orderIds = orders.stream().map(OrderItem::getOrderId).collect(Collectors.toList());
+        // Guard against malformed rows that are missing OrderId to avoid failing the aggregate query.
+        List<UUID> orderIds = orders.stream()
+            .map(OrderItem::getOrderId)
+            .filter(java.util.Objects::nonNull)
+            .distinct()
+            .collect(Collectors.toList());
 
         List<PaymentItem> payments = paymentService.listPaymentsForOrderIds(orderIds);
 

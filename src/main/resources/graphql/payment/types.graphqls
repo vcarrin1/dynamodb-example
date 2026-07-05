@@ -1,0 +1,18 @@
+type PaymentItem {
+  pKey: String
+  sKey: String
+  entityType: String
+  paymentId: UUID
+  orderId: UUID
+  paymentDate: String
+  amount: Float
+  paymentMethod: String
+}
+
+input PaymentItemInput {
+  paymentId: UUID
+  orderId: UUID!
+  paymentDate: String
+  amount: Float
+  paymentMethod: String
+}

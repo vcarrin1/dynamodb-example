@@ -1,0 +1,21 @@
+type ProductItem {
+  pKey: String
+  sKey: String
+  entityType: String
+  productId: UUID
+  name: String
+  description: String
+  price: Float
+}
+
+type ProductAggregate {
+  product: ProductItem
+  orderItems: [OrderLineItem!]
+}
+
+input ProductItemInput {
+  productId: UUID
+  name: String!
+  description: String
+  price: Float
+}

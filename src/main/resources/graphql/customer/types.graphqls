@@ -1,0 +1,34 @@
+type CustomerItem {
+  pKey: String
+  sKey: String
+  entityType: String
+  customerId: UUID
+  name: String
+  email: String
+  address: String
+  createdAt: String
+}
+
+type CustomerAggregate {
+  customer: CustomerItem
+  orders: [OrderItem!]
+  payments: [PaymentItem!]
+}
+
+type CustomerPage {
+  items: [CustomerItem!]!
+  nextToken: String
+}
+
+input CustomerItemInput {
+  customerId: UUID
+  name: String!
+  email: String!
+  address: String
+}
+
+input CustomerFilterInput {
+  customerId: UUID
+  createdAt: String
+  name: String
+}

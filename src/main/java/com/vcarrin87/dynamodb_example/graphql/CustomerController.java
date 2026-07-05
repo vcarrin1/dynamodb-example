@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.graphql.data.method.annotation.Argument;
 import org.springframework.graphql.data.method.annotation.MutationMapping;
 import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 
 import com.vcarrin87.dynamodb_example.models.CustomerAggregate;
@@ -46,6 +47,7 @@ public class CustomerController {
      * @param customerId customer UUID
      * @return customer aggregate or null when not found
      */
+    @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'SCOPE_USER')")
     @QueryMapping
     public CustomerAggregate customer(@Argument UUID customerId) {
         return customerService.getCustomerWithOrdersAndPayments(customerId).orElse(null);
@@ -57,6 +59,7 @@ public class CustomerController {
      * @param customerId customer UUID
      * @return matching order list
      */
+    @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'SCOPE_USER')")
     @QueryMapping
     public List<OrderItem> ordersByCustomer(@Argument UUID customerId) {
         return orderService.listOrdersForCustomer(customerId);
@@ -68,6 +71,7 @@ public class CustomerController {
      * @param customerId customer UUID
      * @return matching payment list
      */
+    @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'SCOPE_USER')")
     @QueryMapping
     public List<PaymentItem> paymentsByCustomer(@Argument UUID customerId) {
         List<OrderItem> orders = orderService.listOrdersForCustomer(customerId);
@@ -80,6 +84,7 @@ public class CustomerController {
      * @param orderInput order payload
      * @return created order
      */
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     @MutationMapping
     public OrderItem createOrder(@Argument("order") OrderItem orderInput) {
         return orderService.createOrder(orderInput);
@@ -91,6 +96,7 @@ public class CustomerController {
      * @param paymentInput payment payload
      * @return created payment
      */
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     @MutationMapping
     public PaymentItem createPayment(@Argument("payment") PaymentItem paymentInput) {
         return paymentService.createPayment(paymentInput);
@@ -104,6 +110,7 @@ public class CustomerController {
      * @param filter optional customer filters
      * @return customer page result
      */
+    @PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'SCOPE_USER')")
     @QueryMapping
     public CustomerPage customers(@Argument Integer pageSize, @Argument String nextToken, @Argument CustomerFilterInput filter) {
         int effectivePageSize = pageSize == null || pageSize <= 0 ? 10 : pageSize;
@@ -116,6 +123,7 @@ public class CustomerController {
      * @param customerInput customer payload
      * @return persisted customer
      */
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
     @MutationMapping("customerUpsert")
     public CustomerItem createCustomer(@Argument("customer") CustomerItem customerInput) {
         return customerService.createCustomer(customerInput);
