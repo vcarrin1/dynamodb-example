@@ -3,7 +3,10 @@ package com.vcarrin87.dynamodb_example.config;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,9 +16,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -24,7 +30,7 @@ import org.springframework.security.oauth2.jwt.JwtClaimValidator;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -32,6 +38,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final String issuerUri;
@@ -117,13 +124,27 @@ public class SecurityConfig {
 
     @Bean
     public Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        authoritiesConverter.setAuthoritiesClaimName("permissions");
-        authoritiesConverter.setAuthorityPrefix("SCOPE_");
+        JwtGrantedAuthoritiesConverter scopeAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
-        JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
-        authenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
-        return authenticationConverter;
+        JwtGrantedAuthoritiesConverter permissionsAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        permissionsAuthoritiesConverter.setAuthoritiesClaimName("permissions");
+        permissionsAuthoritiesConverter.setAuthorityPrefix("SCOPE_");
+
+        return jwt -> {
+            Collection<GrantedAuthority> authorities = new LinkedHashSet<>();
+            authorities.addAll(scopeAuthoritiesConverter.convert(jwt));
+            authorities.addAll(permissionsAuthoritiesConverter.convert(jwt));
+
+            // Add uppercase aliases to tolerate token authority case differences (e.g., admin vs ADMIN).
+            List<GrantedAuthority> normalized = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .filter(authority -> authority != null && !authority.isBlank())
+                .map(authority -> (GrantedAuthority) new SimpleGrantedAuthority(authority.toUpperCase(Locale.ROOT)))
+                .toList();
+            authorities.addAll(normalized);
+
+            return new JwtAuthenticationToken(jwt, authorities);
+        };
     }
 
     private static boolean isGraphQlRequest(HttpServletRequest request) {
