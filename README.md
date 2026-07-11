@@ -53,6 +53,72 @@ Start the Spring Boot app:
 ./mvnw spring-boot:run
 ```
 
+## Security with Auth0
+
+This project uses Auth0 for OAuth2 JWT-based authentication and authorization.
+
+### Configuration
+
+Security is configured in [src/main/java/com/vcarrin87/dynamodb_example/config/SecurityConfig.java](src/main/java/com/vcarrin87/dynamodb_example/config/SecurityConfig.java) with:
+
+- **Issuer URI**: OAuth2 token issuer (e.g., `https://dev-uiyohlg5bc7ywx10.us.auth0.com/`)
+- **Audience**: Expected audience claim in token (e.g., `demo-authorization-api`)
+
+Update these values in `src/main/resources/application.yaml` under `spring.security.oauth2.resourceserver.jwt`:
+
+```yaml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://YOUR_AUTH0_DOMAIN/
+          audience: YOUR_API_IDENTIFIER
+```
+
+### JWT Validation
+
+The JwtDecoder validates:
+1. Token signature using issuer's public key
+2. Token issuer matches configured issuer-uri
+3. Audience claim contains configured audience value
+
+Invalid or missing tokens return HTTP 401 with JSON error:
+```json
+{"errors":[{"message":"Unauthorized"}]}
+```
+
+### Permissions and Authorization
+
+Permissions from the Auth0 token `permissions` claim are mapped to Spring Security authorities with `SCOPE_` prefix.
+
+For example, Auth0 permission `ADMIN` becomes Spring authority `SCOPE_ADMIN`.
+
+Protected endpoints use `@PreAuthorize` annotations:
+- `@PreAuthorize("hasAuthority('SCOPE_ADMIN')")` — requires ADMIN permission
+- `@PreAuthorize("hasAnyAuthority('SCOPE_ADMIN', 'SCOPE_USER')")` — requires ADMIN or USER
+
+Requests with valid token but insufficient permissions return HTTP 403 with JSON error:
+```json
+{"errors":[{"message":"Forbidden"}]}
+```
+
+### Testing with Auth0 Tokens
+
+1. Get an access token from your Auth0 tenant (e.g., via Authorization Code flow or M2M client credentials)
+2. In GraphiQL, click the "Headers" tab
+3. Add:
+   ```json
+   {
+     "Authorization": "Bearer YOUR_ACCESS_TOKEN"
+   }
+   ```
+4. Run your query
+
+The token is validated on each request. If it contains the required permissions, the query executes.
+
+(Note: Security is currently configured to require Auth0 by default.)
+
 ## Seed Local Data
 
 This repository includes helper scripts at the root:
