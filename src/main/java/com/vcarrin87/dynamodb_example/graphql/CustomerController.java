@@ -79,30 +79,6 @@ public class CustomerController {
     }
 
     /**
-     * Creates a new order.
-     *
-     * @param orderInput order payload
-     * @return created order
-     */
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    @MutationMapping
-    public OrderItem createOrder(@Argument("order") OrderItem orderInput) {
-        return orderService.createOrder(orderInput);
-    }
-
-    /**
-     * Creates a new payment.
-     *
-     * @param paymentInput payment payload
-     * @return created payment
-     */
-    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
-    @MutationMapping
-    public PaymentItem createPayment(@Argument("payment") PaymentItem paymentInput) {
-        return paymentService.createPayment(paymentInput);
-    }
-
-    /**
      * Returns paginated customers with optional filters.
      *
      * @param pageSize requested page size
@@ -127,5 +103,18 @@ public class CustomerController {
     @MutationMapping("customerUpsert")
     public CustomerItem createCustomer(@Argument("customer") CustomerItem customerInput) {
         return customerService.createCustomer(customerInput);
+    }
+
+    /**
+     * Deletes a customer and all related orders and payments atomically.
+     *
+     * @param customerId customer UUID to delete
+     * @return confirmation message
+     */
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @MutationMapping
+    public String deleteCustomer(@Argument UUID customerId) {
+        customerService.deleteCustomer(customerId);
+        return String.format("Customer %s deleted successfully", customerId);
     }
 }

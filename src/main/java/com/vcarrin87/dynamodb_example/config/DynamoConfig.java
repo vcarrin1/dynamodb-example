@@ -11,6 +11,8 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 
+import com.vcarrin87.dynamodb_example.util.DynamoDbDeleteUtil;
+
 @Configuration
 public class DynamoConfig {
 
@@ -41,5 +43,16 @@ public class DynamoConfig {
         return DynamoDbEnhancedClient.builder()
                 .dynamoDbClient(dynamoDbClient)
                 .build();
+    }
+
+    /**
+     * Creates a DynamoDB delete utility for atomic transaction operations.
+     *
+     * @param dynamoDbClient base DynamoDB client
+     * @return DynamoDB delete utility
+     */
+    @Bean
+    public DynamoDbDeleteUtil dynamoDbDeleteUtil(DynamoDbClient dynamoDbClient) {
+        return new DynamoDbDeleteUtil(dynamoDbClient);
     }
 }

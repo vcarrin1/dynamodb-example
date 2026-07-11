@@ -31,6 +31,9 @@ Key API capabilities include:
 - upsert customer profile
 - create order
 - create payment
+- delete customer (cascades to related orders and payments)
+- delete order
+- delete payment
 - fetch customer aggregate (`customer + orders + payments`)
 - list customers with pagination and optional filters (`customerId`, `createdAt`, `name contains`)
 
@@ -159,10 +162,14 @@ aws dynamodb update-table \
 - URL: `http://localhost:3000/graphiql`
 
 If security is enabled in your local environment, include a valid Bearer token in your requests.
+In GraphiQL, the example queries are available from the collapsible examples tab.
 
 ## Example GraphQL Operations
 
 Create customer:
+
+<details>
+<summary>Show create customer mutation</summary>
 
 ```graphql
 mutation {
@@ -180,7 +187,12 @@ mutation {
 }
 ```
 
+</details>
+
 Create order:
+
+<details>
+<summary>Show create order mutation</summary>
 
 ```graphql
 mutation {
@@ -198,7 +210,12 @@ mutation {
 }
 ```
 
+</details>
+
 Create payment:
+
+<details>
+<summary>Show create payment mutation</summary>
 
 ```graphql
 mutation {
@@ -218,7 +235,57 @@ mutation {
 }
 ```
 
+</details>
+
+Delete customer (cascades related orders/payments):
+
+<details>
+<summary>Show delete customer mutation</summary>
+
+```graphql
+mutation {
+  deleteCustomer(customerId: "11111111-1111-1111-1111-111111111111")
+}
+```
+
+</details>
+
+Delete order:
+
+<details>
+<summary>Show delete order mutation</summary>
+
+```graphql
+mutation {
+  deleteOrder(
+    orderId: "22222222-2222-2222-2222-222222222222"
+    customerId: "11111111-1111-1111-1111-111111111111"
+  )
+}
+```
+
+</details>
+
+Delete payment:
+
+<details>
+<summary>Show delete payment mutation</summary>
+
+```graphql
+mutation {
+  deletePayment(
+    paymentId: "33333333-3333-3333-3333-333333333333"
+    orderId: "22222222-2222-2222-2222-222222222222"
+  )
+}
+```
+
+</details>
+
 List customers with filter + pagination:
+
+<details>
+<summary>Show customers query with pagination</summary>
 
 ```graphql
 query Customers($pageSize: Int, $nextToken: String, $filter: CustomerFilterInput) {
@@ -232,6 +299,8 @@ query Customers($pageSize: Int, $nextToken: String, $filter: CustomerFilterInput
   }
 }
 ```
+
+</details>
 
 Variables example:
 

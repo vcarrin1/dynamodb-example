@@ -1,3 +1,4 @@
 extend type Mutation {
   createPayment(payment: PaymentItemInput!): PaymentItem
+  deletePayment(paymentId: UUID!, orderId: UUID!): String
 }
