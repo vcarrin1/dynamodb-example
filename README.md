@@ -162,7 +162,27 @@ aws dynamodb update-table \
 - URL: `http://localhost:3000/graphiql`
 
 If security is enabled in your local environment, include a valid Bearer token in your requests.
-In GraphiQL, the example queries are available from the collapsible examples tab.
+This project uses a custom GraphQL console page with global value injection support.
+
+### Global Values in the Console
+
+- Open `http://localhost:3000/graphiql?path=/graphql`
+- Set values in the **Global Values (JSON)** panel (for example `TOKEN`, `CUSTOMER_ID`)
+- Use placeholders in queries/variables/headers with `{{KEY}}` syntax
+- Click **Save** to persist values in browser local storage
+- Click **Run** (or use Cmd/Ctrl + Enter) to execute a request
+- Use **Saved Query Name** + **Save Query** to store named queries
+- Select a saved query from **Saved Queries** to reload it later
+
+![GraphQL UI](graphql-ui.png)
+
+Example variables JSON:
+
+```json
+{
+  "customerId": "{{CUSTOMER_ID}}"
+}
+```
 
 ## Example GraphQL Operations
 

@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GraphQL Console</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #5b6777;
+      --accent: #0b7285;
+      --border: #d4dce7;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: linear-gradient(180deg, #f7fbff 0%, #edf3fb 100%);
+      color: var(--text);
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+    }
+
+    #app {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 10px;
+      box-sizing: border-box;
+      padding: 10px;
+    }
+
+    .row {
+      display: grid;
+      gap: 10px;
+    }
+
+    .row.top {
+      grid-template-columns: 1fr 1fr 120px;
+      align-items: start;
+    }
+
+    .row.main {
+      min-height: 0;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .saved-row {
+      display: grid;
+      grid-template-columns: 1fr 170px 110px 110px;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .saved-row button {
+      height: 36px;
+      line-height: 1.1;
+      margin: 0;
+      padding: 8px 10px;
+    }
+
+    #saveQuery {
+      white-space: nowrap;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+      min-height: 0;
+    }
+
+    .label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font: inherit;
+      padding: 8px 10px;
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      font-family: "IBM Plex Mono", "Consolas", monospace;
+      font-size: 12px;
+      line-height: 1.35;
+      min-height: 120px;
+    }
+
+    #query {
+      min-height: 280px;
+    }
+
+    #response {
+      min-height: 440px;
+      white-space: pre-wrap;
+      overflow: auto;
+      background: #fbfdff;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 22px;
+    }
+
+    button {
+      cursor: pointer;
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+      transition: transform 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover {
+      opacity: 0.94;
+      transform: translateY(-1px);
+    }
+
+    button.secondary {
+      background: #fff;
+      color: var(--accent);
+    }
+
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font: inherit;
+      padding: 8px 10px;
+      background: #fff;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+
+    .status {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 1020px) {
+      .row.top, .row.main {
+        grid-template-columns: 1fr;
+      }
+
+      .saved-row {
+        grid-template-columns: 1fr;
+      }
+
+      .buttons {
+        margin-top: 0;
+        flex-direction: row;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="row top">
+      <div class="panel">
+        <label class="label" for="endpoint">GraphQL Endpoint</label>
+        <input id="endpoint" placeholder="/graphql" />
+        <div class="hint">You can pass <strong>?path=/graphql</strong> in the URL.</div>
+      </div>
+
+      <div class="panel">
+        <label class="label" for="globals">Global Values (JSON)</label>
+        <textarea id="globals" spellcheck="false">{
+  "TOKEN": "",
+  "CUSTOMER_ID": "11111111-1111-1111-1111-111111111111",
+  "ORDER_ID": "22222222-2222-2222-2222-222222222222"
+}</textarea>
+        <div class="hint">Use placeholders like <strong>{{TOKEN}}</strong> in query, variables, and headers.</div>
+      </div>
+
+      <div class="panel">
+        <div class="buttons">
+          <button id="run">Run</button>
+          <button id="save" class="secondary">Save</button>
+        </div>
+        <div class="hint">Cmd/Ctrl + Enter runs the query.</div>
+        <div id="status" class="status">Ready.</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="panel">
+        <div class="saved-row" style="margin-bottom:10px;">
+          <div>
+            <label class="label" for="savedName">Saved Query Name</label>
+            <input id="savedName" placeholder="e.g. Create Customer" />
+          </div>
+          <div>
+            <label class="label" for="savedSelect">Saved Queries</label>
+            <select id="savedSelect">
+              <option value="">(none)</option>
+            </select>
+          </div>
+          <div>
+            <button id="saveQuery" class="secondary" type="button">Save Query</button>
+          </div>
+          <div>
+            <button id="deleteQuery" class="secondary" type="button">Delete</button>
+          </div>
+        </div>
+
+        <label class="label" for="headers">Headers (JSON)</label>
+        <textarea id="headers" spellcheck="false">{
+  "Authorization": "Bearer {{TOKEN}}"
+}</textarea>
+      </div>
+    </div>
+
+    <div class="row main">
+      <div class="panel">
+        <label class="label" for="query">Query</label>
+        <textarea id="query" spellcheck="false">query CustomerById($customerId: UUID!) {
+  customer(customerId: $customerId) {
+    customer { customerId name email }
+    orders { orderId orderStatus }
+  }
+}</textarea>
+
+        <label class="label" for="variables" style="margin-top:10px;">Variables (JSON)</label>
+        <textarea id="variables" spellcheck="false">{
+  "customerId": "{{CUSTOMER_ID}}"
+}</textarea>
+      </div>
+
+      <div class="panel">
+        <label class="label" for="response">Response</label>
+        <textarea id="response" readonly spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = "custom-graphql-console-v1";
+      const SAVED_QUERIES_KEY = "custom-graphql-saved-queries-v1";
+      const params = new URLSearchParams(window.location.search);
+
+      const endpointEl = document.getElementById("endpoint");
+      const globalsEl = document.getElementById("globals");
+      const headersEl = document.getElementById("headers");
+      const queryEl = document.getElementById("query");
+      const variablesEl = document.getElementById("variables");
+      const responseEl = document.getElementById("response");
+      const statusEl = document.getElementById("status");
+      const runBtn = document.getElementById("run");
+      const saveBtn = document.getElementById("save");
+      const saveQueryBtn = document.getElementById("saveQuery");
+      const deleteQueryBtn = document.getElementById("deleteQuery");
+      const savedNameEl = document.getElementById("savedName");
+      const savedSelectEl = document.getElementById("savedSelect");
+
+      function setStatus(text) {
+        statusEl.textContent = text;
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_e) {
+          return null;
+        }
+      }
+
+      function loadSavedQueries() {
+        try {
+          const raw = localStorage.getItem(SAVED_QUERIES_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (_e) {
+          return [];
+        }
+      }
+
+      function persistSavedQueries(items) {
+        localStorage.setItem(SAVED_QUERIES_KEY, JSON.stringify(items));
+      }
+
+      function refreshSavedSelect(selectedName) {
+        const items = loadSavedQueries();
+        savedSelectEl.innerHTML = "<option value=\"\">(none)</option>";
+
+        items.forEach(function (item) {
+          const option = document.createElement("option");
+          option.value = item.name;
+          option.textContent = item.name;
+          if (selectedName && selectedName === item.name) {
+            option.selected = true;
+          }
+          savedSelectEl.appendChild(option);
+        });
+      }
+
+      function currentSnapshot() {
+        return {
+          query: queryEl.value,
+          variables: variablesEl.value,
+          headers: headersEl.value
+        };
+      }
+
+      function applySnapshot(snapshot) {
+        if (!snapshot) {
+          return;
+        }
+        queryEl.value = snapshot.query || "";
+        variablesEl.value = snapshot.variables || "{}";
+        headersEl.value = snapshot.headers || "{}";
+      }
+
+      function saveState() {
+        const state = {
+          endpoint: endpointEl.value,
+          globals: globalsEl.value,
+          headers: headersEl.value,
+          query: queryEl.value,
+          variables: variablesEl.value
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        setStatus("Saved locally.");
+      }
+
+      function parseJson(text, label) {
+        try {
+          return JSON.parse(text || "{}");
+        } catch (e) {
+          throw new Error(label + " is not valid JSON: " + e.message);
+        }
+      }
+
+      function interpolate(str, globals) {
+        if (typeof str !== "string") {
+          return str;
+        }
+        return str.replace(/\{\{\s*([A-Z0-9_]+)\s*\}\}/gi, function (_m, key) {
+          const value = globals[key];
+          return value === undefined || value === null ? "" : String(value);
+        });
+      }
+
+      async function runQuery() {
+        try {
+          setStatus("Running...");
+
+          const globals = parseJson(globalsEl.value, "Global values");
+          const endpoint = (endpointEl.value || "/graphql").trim();
+
+          const query = interpolate(queryEl.value, globals);
+          const variablesText = interpolate(variablesEl.value, globals);
+          const headersText = interpolate(headersEl.value, globals);
+
+          const variables = parseJson(variablesText, "Variables");
+          const userHeaders = parseJson(headersText, "Headers");
+          const headers = Object.assign({ "Content-Type": "application/json" }, userHeaders);
+
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: headers,
+            credentials: "same-origin",
+            body: JSON.stringify({ query: query, variables: variables })
+          });
+
+          const text = await res.text();
+          try {
+            const json = JSON.parse(text);
+            responseEl.value = JSON.stringify(json, null, 2);
+          } catch (_e) {
+            responseEl.value = text;
+          }
+
+          setStatus("Done. HTTP " + res.status + ".");
+        } catch (e) {
+          responseEl.value = JSON.stringify({ errors: [{ message: e.message }] }, null, 2);
+          setStatus("Failed.");
+        }
+      }
+
+      const saved = loadState();
+      refreshSavedSelect();
+      endpointEl.value = params.get("path") || (saved && saved.endpoint) || "/graphql";
+      if (saved && saved.globals) globalsEl.value = saved.globals;
+      if (saved && saved.headers) headersEl.value = saved.headers;
+      if (saved && saved.query) queryEl.value = saved.query;
+      if (saved && saved.variables) variablesEl.value = saved.variables;
+
+      runBtn.addEventListener("click", runQuery);
+      saveBtn.addEventListener("click", saveState);
+
+      saveQueryBtn.addEventListener("click", function () {
+        const name = (savedNameEl.value || "").trim();
+        if (!name) {
+          setStatus("Enter a query name first.");
+          return;
+        }
+
+        const items = loadSavedQueries();
+        const existingIdx = items.findIndex(function (item) { return item.name === name; });
+        const next = {
+          name: name,
+          snapshot: currentSnapshot()
+        };
+
+        if (existingIdx >= 0) {
+          items[existingIdx] = next;
+          setStatus("Updated saved query: " + name);
+        } else {
+          items.push(next);
+          setStatus("Saved query: " + name);
+        }
+
+        persistSavedQueries(items);
+        refreshSavedSelect(name);
+      });
+
+      deleteQueryBtn.addEventListener("click", function () {
+        const selected = (savedSelectEl.value || "").trim();
+        if (!selected) {
+          setStatus("Select a saved query to delete.");
+          return;
+        }
+
+        const items = loadSavedQueries().filter(function (item) {
+          return item.name !== selected;
+        });
+
+        persistSavedQueries(items);
+        refreshSavedSelect();
+        setStatus("Deleted saved query: " + selected);
+      });
+
+      savedSelectEl.addEventListener("change", function () {
+        const selected = (savedSelectEl.value || "").trim();
+        if (!selected) {
+          return;
+        }
+
+        const item = loadSavedQueries().find(function (entry) {
+          return entry.name === selected;
+        });
+
+        if (!item) {
+          setStatus("Saved query not found.");
+          return;
+        }
+
+        savedNameEl.value = item.name;
+        applySnapshot(item.snapshot);
+        setStatus("Loaded saved query: " + item.name);
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+          event.preventDefault();
+          runQuery();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

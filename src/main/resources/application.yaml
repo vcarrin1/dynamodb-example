@@ -9,7 +9,7 @@ spring:
     schema:
       locations: classpath*:graphql/**/
     graphiql:
-      enabled: true
+      enabled: false
 
   security:
     oauth2:
