@@ -27,6 +27,34 @@ public class OrderItemRepository {
         this.enhancedClient = enhancedClient;
     }
 
+    public void save(OrderLineItem orderItem) {
+        DynamoDbTable<OrderLineItem> table = enhancedClient.table(ORDER_LINE_TABLE, TableSchema.fromBean(OrderLineItem.class));
+        table.putItem(orderItem);
+    }
+
+    public List<OrderLineItem> findAll() {
+        DynamoDbTable<OrderLineItem> table = enhancedClient.table(ORDER_LINE_TABLE, TableSchema.fromBean(OrderLineItem.class));
+        return table.scan().items().stream().collect(Collectors.toList());
+    }
+
+    public List<OrderLineItem> findByOrderId(UUID orderId) {
+        DynamoDbTable<OrderLineItem> table = enhancedClient.table(ORDER_LINE_TABLE, TableSchema.fromBean(OrderLineItem.class));
+
+        Map<String, AttributeValue> values = Map.of(
+                ":orderId", AttributeValue.builder().s(orderId.toString()).build());
+
+        Expression filterExpression = Expression.builder()
+                .expression("OrderId = :orderId")
+                .expressionValues(values)
+                .build();
+
+        ScanEnhancedRequest req = ScanEnhancedRequest.builder()
+                .filterExpression(filterExpression)
+                .build();
+
+        return table.scan(req).items().stream().collect(Collectors.toList());
+    }
+
     public List<OrderLineItem> findByProductId(UUID productId) {
         DynamoDbTable<OrderLineItem> table = enhancedClient.table(ORDER_LINE_TABLE, TableSchema.fromBean(OrderLineItem.class));
 

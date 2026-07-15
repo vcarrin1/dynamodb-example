@@ -26,3 +26,11 @@ input OrderItemInput {
   orderStatus: String
   deliveryDate: String
 }
+
+input OrderLineItemInput {
+  orderItemId: UUID
+  orderId: UUID!
+  productId: UUID!
+  quantity: Int!
+  price: Float!
+}

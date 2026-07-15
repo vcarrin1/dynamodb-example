@@ -5,3 +5,8 @@ type InventoryItem {
   productId: UUID
   stockLevel: Int
 }
+
+input InventoryItemInput {
+  productId: UUID!
+  stockLevel: Int!
+}

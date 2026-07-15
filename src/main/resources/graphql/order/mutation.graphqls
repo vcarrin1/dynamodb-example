@@ -1,4 +1,5 @@
 extend type Mutation {
   createOrder(order: OrderItemInput!): OrderItem
   deleteOrder(orderId: UUID!, customerId: UUID!): String
+  createOrderItem(orderItem: OrderLineItemInput!): OrderLineItem
 }

@@ -1,0 +1,3 @@
+extend type Query {
+  inventoryByProduct(productId: UUID!): InventoryItem
+}

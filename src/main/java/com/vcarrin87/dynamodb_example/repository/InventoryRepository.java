@@ -29,6 +29,19 @@ public class InventoryRepository {
         this.enhancedClient = enhancedClient;
     }
 
+    public void save(InventoryItem inventory) {
+        DynamoDbTable<InventoryItem> table = enhancedClient.table(INVENTORY_TABLE, TableSchema.fromBean(InventoryItem.class));
+        table.putItem(inventory);
+    }
+
+    public InventoryItem findByProductId(UUID productId) {
+        DynamoDbTable<InventoryItem> table = enhancedClient.table(INVENTORY_TABLE, TableSchema.fromBean(InventoryItem.class));
+        return table.getItem(r -> r.key(Key.builder()
+                .partitionValue(Keys.productPk(productId.toString()))
+                .sortValue(Keys.inventorySk())
+                .build()));
+    }
+
     public void deleteInventoryByProductId(UUID productId) {
         DynamoDbTable<InventoryItem> table = enhancedClient.table(INVENTORY_TABLE, TableSchema.fromBean(InventoryItem.class));
         table.deleteItem(r -> r.key(Key.builder()

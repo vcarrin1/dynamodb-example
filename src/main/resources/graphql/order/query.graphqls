@@ -1,3 +1,5 @@
 extend type Query {
   ordersByCustomer(customerId: UUID!): [OrderItem!]
+  orderItems: [OrderLineItem!]!
+  orderItemsByOrder(orderId: UUID!): [OrderLineItem!]!
 }
