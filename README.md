@@ -211,6 +211,9 @@ mutation {
 
 Create order:
 
+Order status uses the `OrderStatus` enum (no quotes).
+Supported values: `CREATED`, `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`.
+
 <details>
 <summary>Show create order mutation</summary>
 
@@ -219,7 +222,7 @@ mutation {
   createOrder(
     order: {
       customerId: "11111111-1111-1111-1111-111111111111"
-      orderStatus: "CREATED"
+      orderStatus: CREATED
       deliveryDate: "2026-07-01T00:00:00Z"
     }
   ) {

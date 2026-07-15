@@ -1,10 +1,19 @@
+enum OrderStatus {
+  CREATED
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 type OrderItem {
   pKey: String
   sKey: String
   entityType: String
   orderId: UUID
   customerId: String
-  orderStatus: String
+  orderStatus: OrderStatus
   deliveryDate: String
   createdAt: String
 }
@@ -23,7 +32,7 @@ type OrderLineItem {
 input OrderItemInput {
   orderId: UUID
   customerId: UUID!
-  orderStatus: String
+  orderStatus: OrderStatus
   deliveryDate: String
 }
 
