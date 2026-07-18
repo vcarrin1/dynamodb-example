@@ -1,6 +1,7 @@
 package com.vcarrin87.dynamodb_example.repository;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,7 +71,7 @@ public class CustomerRepository {
      * @param pageSize page size
      * @param nextToken pagination cursor from the previous page
      * @param customerId optional customer ID filter
-     * @param createdAt optional created-at filter
+     * @param createdAt optional created-at start date/time filter (range to now)
      * @param name optional partial name filter using contains
      * @return customer page
      */
@@ -89,8 +90,9 @@ public class CustomerRepository {
         }
 
         if (createdAt != null && !createdAt.isBlank()) {
-            values.put(":createdAt", AttributeValue.builder().s(createdAt).build());
-            clauses.add("CreatedAt = :createdAt");
+            values.put(":createdAtFrom", AttributeValue.builder().s(createdAt).build());
+            values.put(":createdAtTo", AttributeValue.builder().s(Instant.now().toString()).build());
+            clauses.add("CreatedAt BETWEEN :createdAtFrom AND :createdAtTo");
         }
 
         if (name != null && !name.isBlank()) {
@@ -109,19 +111,30 @@ public class CustomerRepository {
 
         Expression filterExpression = expressionBuilder.build();
 
+        // Fetch more items internally to account for filter reducing results.
+        // DynamoDB applies limit before filter, so fetch 5x to ensure we get pageSize results after filtering.
+        int scanLimit = pageSize * 5;
+
         ScanEnhancedRequest.Builder requestBuilder = ScanEnhancedRequest.builder()
                 .filterExpression(filterExpression)
-                .limit(pageSize);
+                .limit(scanLimit);
 
         if (nextToken != null && !nextToken.isBlank()) {
             requestBuilder.exclusiveStartKey(decodeExclusiveStartKey(nextToken));
         }
 
         Page<CustomerItem> page = table.scan(requestBuilder.build()).iterator().next();
+        
+        // Trim results to requested pageSize if we got more than needed
+        List<CustomerItem> items = page.items();
+        if (items.size() > pageSize) {
+            items = items.subList(0, pageSize);
+        }
+        
         String newNextToken = encodeExclusiveStartKey(page.lastEvaluatedKey());
 
         return CustomerPage.builder()
-                .items(page.items())
+                .items(items)
                 .nextToken(newNextToken)
                 .build();
     }

@@ -35,7 +35,7 @@ Key API capabilities include:
 - delete order
 - delete payment
 - fetch customer aggregate (`customer + orders + payments`)
-- list customers with pagination and optional filters (`customerId`, `createdAt`, `name contains`)
+- list customers with pagination and optional filters (`customerId`, `createdAt` range start-to-now, `name contains`)
 
 ID type notes:
 
@@ -186,8 +186,7 @@ Example variables JSON:
 
 ## Example GraphQL Operations
 
-Create customer:
-
+Customer:
 <details>
 <summary>Show create customer mutation</summary>
 
@@ -209,9 +208,38 @@ mutation {
 
 </details>
 
-Create order:
+<details>
+<summary>Show delete customer mutation</summary>
+Delete customer (cascades related orders/payments):
 
-Order status uses the `OrderStatus` enum (no quotes).
+```graphql
+mutation {
+  deleteCustomer(customerId: "11111111-1111-1111-1111-111111111111")
+}
+```
+</details>
+
+<details>
+<summary>Show customers query with filter + pagination</summary>
+
+```graphql
+query Customers($pageSize: Int, $nextToken: String, $filter: CustomerFilterInput) {
+  customers(pageSize: $pageSize, nextToken: $nextToken, filter: $filter) {
+    items {
+      customerId
+      name
+      createdAt
+    }
+    nextToken
+  }
+}
+```
+</details>
+</br>
+
+Order:
+
+Order status uses the `OrderStatus` enum (no quotes). \
 Supported values: `CREATED`, `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`.
 
 <details>
@@ -232,10 +260,23 @@ mutation {
   }
 }
 ```
-
 </details>
 
-Create payment:
+<details>
+<summary>Show delete order mutation</summary>
+
+```graphql
+mutation {
+  deleteOrder(
+    orderId: "22222222-2222-2222-2222-222222222222"
+    customerId: "11111111-1111-1111-1111-111111111111"
+  )
+}
+```
+</details>
+</br>
+
+Payment:
 
 <details>
 <summary>Show create payment mutation</summary>
@@ -257,39 +298,7 @@ mutation {
   }
 }
 ```
-
 </details>
-
-Delete customer (cascades related orders/payments):
-
-<details>
-<summary>Show delete customer mutation</summary>
-
-```graphql
-mutation {
-  deleteCustomer(customerId: "11111111-1111-1111-1111-111111111111")
-}
-```
-
-</details>
-
-Delete order:
-
-<details>
-<summary>Show delete order mutation</summary>
-
-```graphql
-mutation {
-  deleteOrder(
-    orderId: "22222222-2222-2222-2222-222222222222"
-    customerId: "11111111-1111-1111-1111-111111111111"
-  )
-}
-```
-
-</details>
-
-Delete payment:
 
 <details>
 <summary>Show delete payment mutation</summary>
@@ -302,28 +311,8 @@ mutation {
   )
 }
 ```
-
 </details>
-
-List customers with filter + pagination:
-
-<details>
-<summary>Show customers query with pagination</summary>
-
-```graphql
-query Customers($pageSize: Int, $nextToken: String, $filter: CustomerFilterInput) {
-  customers(pageSize: $pageSize, nextToken: $nextToken, filter: $filter) {
-    items {
-      customerId
-      name
-      createdAt
-    }
-    nextToken
-  }
-}
-```
-
-</details>
+</br>
 
 Variables example:
 
@@ -333,6 +322,57 @@ Variables example:
   "nextToken": null,
   "filter": {
     "name": "Jane"
+  }
+}
+```
+
+Customer filter examples:
+
+By name contains:
+
+```json
+{
+  "pageSize": 10,
+  "nextToken": null,
+  "filter": {
+    "name": "Tom"
+  }
+}
+```
+
+By customerId:
+
+```json
+{
+  "pageSize": 10,
+  "nextToken": null,
+  "filter": {
+    "customerId": "58fa753f-b4ab-47e7-b3e0-1716e5f3ee5b"
+  }
+}
+```
+
+By createdAt (range start, end is now):
+
+```json
+{
+  "pageSize": 10,
+  "nextToken": null,
+  "filter": {
+    "createdAt": "2026-05-23T00:00:00Z"
+  }
+}
+```
+
+Combined filters:
+
+```json
+{
+  "pageSize": 10,
+  "nextToken": null,
+  "filter": {
+    "name": "Jane",
+    "createdAt": "2026-05-23T00:00:00Z"
   }
 }
 ```
